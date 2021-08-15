@@ -377,9 +377,10 @@ OBS::Display::Display(uint64_t windowHandle, enum obs_video_rendering_mode mode,
 	obs_source_inc_showing(m_source);
 }
 
-OBS::Display::~Display()
+void OBS::Display::destroy()
 {
 	m_displayMtx.lock();
+  SetSize(0, 0);
 	obs_display_remove_draw_callback(m_display, DisplayCallback, this);
 
 	if (m_source) {
@@ -400,38 +401,10 @@ OBS::Display::~Display()
 	m_boxLine = nullptr;
 	m_boxTris = nullptr;
 
-	if (m_display)
-		obs_display_destroy(m_display);
+	if (m_display) {
+    obs_display_destroy(m_display);
+  }
 	m_displayMtx.unlock();
-
-#ifdef _WIN32
-	DestroyWindowMessageQuestion question;
-	DestroyWindowMessageAnswer   answer;
-
-	question.window = m_ourWindow;
-	PostThreadMessage(
-	    GetThreadId(worker.native_handle()),
-	    (UINT)SystemWorkerMessage::DestroyWindow,
-	    reinterpret_cast<intptr_t>(&question),
-	    reinterpret_cast<intptr_t>(&answer));
-
-	if (!answer.try_wait()) {
-		while (!answer.wait()) {
-			if (answer.called)
-				break;
-			Sleep(0);
-		}
-	}
-
-	if (!answer.success) {
-		std::cerr << "OBS::Display::~Display: " << answer.errorMessage << std::endl;
-	}
-
-	PostThreadMessage(GetThreadId(worker.native_handle()), (UINT)SystemWorkerMessage::StopThread, NULL, NULL);
-
-	if (worker.joinable())
-		worker.join();
-#endif
 }
 
 void OBS::Display::SetPosition(uint32_t x, uint32_t y)

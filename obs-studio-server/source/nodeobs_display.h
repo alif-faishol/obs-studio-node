@@ -63,7 +63,7 @@ namespace OBS
 		Display(uint64_t windowHandle,
 		    enum obs_video_rendering_mode mode,
 		    std::string                   sourceName); // Create a Source-Specific one
-		~Display();
+		void destroy();
 
 		void                          SetPosition(uint32_t x, uint32_t y);
 		std::pair<uint32_t, uint32_t> GetPosition();

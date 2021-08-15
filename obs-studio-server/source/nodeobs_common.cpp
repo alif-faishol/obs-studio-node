@@ -313,7 +313,7 @@ void OBS_content::OBS_content_destroyDisplay(
     const std::vector<ipc::value>& args,
     std::vector<ipc::value>&       rval)
 {
-	auto found = displays.find(args[0].value_str);
+	std::map<std::string, OBS::Display*>::iterator found = displays.find(args[0].value_str);
 
 	if (found == displays.end()) {
 		std::cerr << "Failed to find key for destruction: " << args[0].value_str << std::endl;
@@ -322,11 +322,8 @@ void OBS_content::OBS_content_destroyDisplay(
 		return;
 	}
 
-	if (windowMessage != NULL && windowMessage->joinable())
-		windowMessage->join();
-    
-    delete found->second;
-    displays.erase(found);
+  found->second->destroy();
+  displays.erase(found);
 
 	rval.push_back(ipc::value((uint64_t)ErrorCode::Ok));
 	AUTO_DEBUG;
